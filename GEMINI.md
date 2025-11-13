@@ -1,5 +1,11 @@
 # GEMINI
 
+必須使用繁體中文
+
+## Principle
+
+- KISS
+
 ## Tech stack
 
 1. Python, uv
