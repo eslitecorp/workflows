@@ -163,6 +163,7 @@ jobs:
       pull-requests: 'write'
     with:
       additional_context: '${{ needs.dispatch.outputs.additional_context }}'
+      debug: 'true'
     secrets: 'inherit'
 
   fallthrough:

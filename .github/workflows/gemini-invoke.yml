@@ -64,7 +64,7 @@ jobs:
           settings: |-
             {
               "model": {
-                "maxSessionTurns": 25
+                "maxSessionTurns": 50
               },
               "telemetry": {
                 "enabled": ${{ vars.GOOGLE_CLOUD_PROJECT != '' }},
