@@ -1,0 +1,8 @@
+{
+  "action": "opened",
+  "issue": {
+    "number": 1,
+    "title": "Test Issue",
+    "body": "This is a test issue for the agent."
+  }
+}

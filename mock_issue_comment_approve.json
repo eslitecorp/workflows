@@ -1,0 +1,11 @@
+{
+    "action": "created",
+    "issue": {
+        "number": 1,
+        "title": "Test Issue",
+        "body": "This is a test issue for the agent."
+    },
+    "comment": {
+        "body": "LGTM! Approve."
+    }
+}
