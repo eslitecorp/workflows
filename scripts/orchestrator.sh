@@ -18,9 +18,7 @@ call_gemini() {
   local model="$2"
   
   echo "Running Gemini CLI with model $model..."
-  # Note: Assuming gemini run takes prompt as argument. 
-  # Adjust based on actual CLI syntax if needed (e.g. piped input).
-  gemini run "$prompt" --model "$model"
+  gemini -p "$prompt" --model "$model" --yolo
 }
 
 # 2. Router
