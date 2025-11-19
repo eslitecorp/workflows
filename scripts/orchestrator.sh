@@ -83,22 +83,39 @@ elif [ "$EVENT_NAME" == "issue_comment" ]; then
       git checkout -b "$BRANCH_NAME"
       
       # Act
-      PROMPT="使用者已批准計畫。請根據計畫與 Issue 上下文，直接修改代碼。請確保代碼符合 GEMINI.md 規範。"
+      ISSUE_BODY=$(jq -r .issue.body "$GITHUB_EVENT_PATH")
+      
+      # Fetch all comments for context
+      COMMENTS_JSON=$(gh issue view "$ISSUE_NUMBER" --json comments)
+      ALL_COMMENTS=$(echo "$COMMENTS_JSON" | jq -r '.comments | map("--- Comment ---\n" + .body) | join("\n\n")')
+      
+      PROMPT="這是 Issue 的原始需求：
+$ISSUE_BODY
+
+這是過去的討論紀錄 (包含之前的 Plan 和 User Feedback)：
+$ALL_COMMENTS
+
+使用者現在批准了 (/lgtm)。請根據 '最新的共識' 和 '最後的 Plan' 進行實作。請確保代碼符合 GEMINI.md 規範。"
+      
       RESULT=$(call_gemini "$PROMPT" "gemini-2.5-pro")
       echo "--- Act Result ---"
       echo "$RESULT"
       
       # Commit & Push
       git add .
-      git commit -m "feat: implement issue #$ISSUE_NUMBER"
-      git push origin "$BRANCH_NAME"
-      
-      # Create PR
-      PR_BODY="Implemented changes for Issue #$ISSUE_NUMBER.\n\n## Changes\n$RESULT"
-      gh pr create --title "feat: implement issue #$ISSUE_NUMBER" --body "$PR_BODY" --base "main" --head "$BRANCH_NAME"
-      
-      # Update Labels
-      gh issue edit "$ISSUE_NUMBER" --remove-label "agent:planning" --add-label "agent:reviewing"
+      if git diff --staged --quiet; then
+        echo "No changes to commit."
+      else
+        git commit -m "feat: implement issue #$ISSUE_NUMBER"
+        git push origin "$BRANCH_NAME"
+        
+        # Create PR
+        PR_BODY="Implemented changes for Issue #$ISSUE_NUMBER.\n\n## Changes\n$RESULT"
+        gh pr create --title "feat: implement issue #$ISSUE_NUMBER" --body "$PR_BODY" --base "main" --head "$BRANCH_NAME"
+        
+        # Update Labels
+        gh issue edit "$ISSUE_NUMBER" --remove-label "agent:planning" --add-label "agent:reviewing"
+      fi
       
     else
       echo "No GAGA command detected."

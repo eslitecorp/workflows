@@ -6,6 +6,6 @@
         "body": "This is a test issue for the agent."
     },
     "comment": {
-        "body": "LGTM! Approve."
+        "body": "/lgtm"
     }
 }
