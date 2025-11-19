@@ -75,6 +75,19 @@ elif [ "$EVENT_NAME" == "issue_comment" ]; then
     # 2. Check for APPROVE command
     elif echo "$COMMENT_BODY" | grep -iqE "/gaga approve|/lgtm"; then
       echo "Command detected: APPROVE"
+
+      # Check for db-operation label and perform operation if present
+      if gh issue view "$ISSUE_NUMBER" --json labels -q '.labels[].name' | grep -q "db-operation"; then
+        echo "Label 'db-operation' found. Performing database operation..."
+        
+        # --- DATABASE OPERATION LOGIC ---
+        # This is a placeholder. Replace with your actual database command.
+        echo "Simulating database operation for issue #$ISSUE_NUMBER."
+        # --- END DATABASE OPERATION LOGIC ---
+        
+        gh issue comment "$ISSUE_NUMBER" --body "✅ Database operation for issue #$ISSUE_NUMBER completed."
+        echo "Database operation finished."
+      fi
       
       # Git Setup
       BRANCH_NAME="feature/issue-$ISSUE_NUMBER"
