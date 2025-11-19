@@ -1,0 +1,11 @@
+{
+    "action": "created",
+    "issue": {
+        "number": 3,
+        "title": "GAGA Test",
+        "body": "Test GAGA planning."
+    },
+    "comment": {
+        "body": "/gaga plan"
+    }
+}

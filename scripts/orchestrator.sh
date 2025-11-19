@@ -30,28 +30,19 @@ if [ "$EVENT_NAME" == "issues" ]; then
   
   if [ "$ACTION" == "opened" ]; then
     echo "Processing Issue #$ISSUE_NUMBER..."
-    ISSUE_BODY=$(jq -r .issue.body "$GITHUB_EVENT_PATH")
     
-    # Determine Model for Planning
-    PLAN_MODEL="gemini-2.5-flash"
-    if echo "$ISSUE_BODY" | grep -iq "/model pro"; then
-      PLAN_MODEL="gemini-2.5-pro"
-      echo "Model override detected: Using gemini-2.5-pro"
-    elif echo "$ISSUE_BODY" | grep -iq "/model flash"; then
-      PLAN_MODEL="gemini-2.5-flash"
-      echo "Model override detected: Using gemini-2.5-flash"
-    fi
+    USAGE_GUIDE="👋 Hi! I'm **GAGA** (GitHub Autonomous Gemini Agent).
+
+I'm here to help you code. To get started, please comment with one of the following commands:
+
+- \`/gaga plan\`: I will analyze your request and propose an implementation plan.
+- \`/gaga plan --model pro\`: Use the stronger Gemini 2.5 Pro model for planning.
+- \`/gaga approve\` or \`/lgtm\`: I will execute the approved plan.
+
+Waiting for your command! 🚀"
     
-    PROMPT="你是一個資深工程師。請閱讀 Issue 需求，分析專案結構，並列出詳細的實作計畫 (Step-by-step)。最後請詢問使用者是否同意。需求：$ISSUE_BODY"
-    
-    PLAN=$(call_gemini "$PROMPT" "$PLAN_MODEL")
-    echo "--- Generated Plan ---"
-    echo "$PLAN"
-    
-    # Post Plan to Issue
-    gh issue comment "$ISSUE_NUMBER" --body "$PLAN"
-    # Add Label
-    gh issue edit "$ISSUE_NUMBER" --add-label "agent:planning"
+    # Post Usage Guide
+    gh issue comment "$ISSUE_NUMBER" --body "$USAGE_GUIDE"
   fi
 
 elif [ "$EVENT_NAME" == "issue_comment" ]; then
@@ -62,9 +53,30 @@ elif [ "$EVENT_NAME" == "issue_comment" ]; then
     ISSUE_NUMBER=$(jq -r .issue.number "$GITHUB_EVENT_PATH")
     echo "Processing Comment on Issue #$ISSUE_NUMBER..."
     
-    # Check for approval (case insensitive)
-    if echo "$COMMENT_BODY" | grep -iqE "/lgtm|approve"; then
-      echo "User Approved. Triggering ACT phase."
+    # 1. Check for PLAN command
+    if echo "$COMMENT_BODY" | grep -iq "/gaga plan"; then
+        echo "Command detected: PLAN"
+        ISSUE_BODY=$(jq -r .issue.body "$GITHUB_EVENT_PATH")
+        
+        # Determine Model
+        PLAN_MODEL="gemini-2.5-flash"
+        if echo "$COMMENT_BODY" | grep -iq "model pro"; then
+          PLAN_MODEL="gemini-2.5-pro"
+          echo "Model override: Using gemini-2.5-pro"
+        fi
+        
+        PROMPT="你是一個資深工程師。請閱讀 Issue 需求，分析專案結構，並列出詳細的實作計畫 (Step-by-step)。最後請詢問使用者是否同意。需求：$ISSUE_BODY"
+        
+        PLAN=$(call_gemini "$PROMPT" "$PLAN_MODEL")
+        echo "--- Generated Plan ---"
+        echo "$PLAN"
+        
+        gh issue comment "$ISSUE_NUMBER" --body "$PLAN"
+        gh issue edit "$ISSUE_NUMBER" --add-label "agent:planning"
+
+    # 2. Check for APPROVE command
+    elif echo "$COMMENT_BODY" | grep -iqE "/gaga approve|/lgtm"; then
+      echo "Command detected: APPROVE"
       
       # Git Setup
       BRANCH_NAME="feature/issue-$ISSUE_NUMBER"
@@ -91,14 +103,7 @@ elif [ "$EVENT_NAME" == "issue_comment" ]; then
       gh issue edit "$ISSUE_NUMBER" --remove-label "agent:planning" --add-label "agent:reviewing"
       
     else
-      echo "User Feedback detected. Triggering RE-PLAN phase."
-      PROMPT="使用者反饋：$COMMENT_BODY。請重新規劃。"
-      PLAN=$(call_gemini "$PROMPT" "gemini-2.5-flash")
-      echo "--- Updated Plan ---"
-      echo "$PLAN"
-      
-      # Post Updated Plan
-      gh issue comment "$ISSUE_NUMBER" --body "$PLAN"
+      echo "No GAGA command detected."
     fi
   fi
 fi
