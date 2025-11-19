@@ -1,0 +1,8 @@
+{
+    "action": "opened",
+    "issue": {
+        "number": 2,
+        "title": "Complex Issue",
+        "body": "Build a complex feature. /model pro"
+    }
+}

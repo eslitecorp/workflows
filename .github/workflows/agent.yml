@@ -31,4 +31,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
-        run: python3 scripts/orchestrator.py
+        run: ./scripts/orchestrator.sh
